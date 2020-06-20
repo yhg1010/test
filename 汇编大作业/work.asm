@@ -1,0 +1,445 @@
+CLS MACRO R1,C1,R2,C2,X			;清屏
+    PUSH AX
+    PUSH BX
+    PUSH CX
+    PUSH DX
+    MOV AH,6
+    MOV AL,0
+    MOV BH,X
+    MOV CH,R1
+    MOV CL,C1
+    MOV DH,R2
+    MOV DL,C2
+    INT 10H  
+    POP DX
+    POP CX
+    POP BX
+    POP AX
+    ENDM
+    
+    
+ROW MACRO X1 , X2 , Y1 		;画横线
+	LOCAL ADDR
+	MOV CX , X1
+	MOV DX , Y1
+ADDR:
+	MOV AH , 0CH
+	MOV AL , 1
+	INT 10H
+	INC CX
+	CMP CX , X2
+	JNE ADDR
+	ENDM
+
+
+
+COLUMN MACRO X1 ,  Y1 , Y2	;画竖线
+	LOCAL ADDC
+	MOV CX , X1
+	MOV DX , Y1
+ADDC:
+	MOV AH , 0CH
+	MOV AL , 1
+	INT 10H
+	INC DX
+	CMP DX , Y2
+	JNE ADDC
+	ENDM    
+
+COLUMN2 MACRO X1 ,  Y1 , Y2	;画竖线（机关）
+	LOCAL ADDC
+	MOV CX , X1
+	MOV DX , Y1
+ADDC:
+	MOV AH , 0CH
+	MOV AL , 3
+	INT 10H
+	INC DX
+	CMP DX , Y2
+	JNE ADDC
+	ENDM    
+	
+ROW2 MACRO X1 , X2 , Y1 	;画横线（机关）
+	LOCAL ADDR
+	MOV CX , X1
+	MOV DX , Y1
+ADDR:
+	MOV AH , 0CH
+	MOV AL , 3
+	INT 10H
+	INC CX
+	CMP CX , X2
+	JNE ADDR
+	ENDM
+
+  
+    
+;画方块
+SQUARE MACRO X1,Y1
+    LOCAL ADDR	
+	MOV SI,X1
+	ADD SI,14
+	MOV DI,Y1
+	ADD DI,14
+	MOV CX , X1
+	MOV DX , Y1
+ADDR:
+	MOV AH , 0CH
+	MOV AL , 2
+	INT 10H
+	INC CX
+	CMP CX , SI
+	JNE ADDR
+	MOV CX , X1
+	INC DX
+	CMP DX , DI
+	JNE ADDR
+    ENDM
+
+;抹方块（上）
+WAPEU MACRO X1,Y1
+    LOCAL ADDR	
+	MOV SI,X1
+	ADD SI,14
+	MOV DI,Y1
+	ADD DI,13
+	MOV CX , X1
+	MOV DX , DI
+ADDR:
+	MOV AH , 0CH
+	MOV AL , 0
+	INT 10H
+	INC CX
+	CMP CX , SI
+	JNE ADDR
+    ENDM    
+    
+    
+;抹方块（下）
+WAPED MACRO X1,Y1
+    LOCAL ADDR	
+	MOV SI,X1
+	ADD SI,14
+	MOV DI,Y1
+	ADD DI,14
+	MOV CX , X1
+	MOV DX , Y1
+ADDR:
+	MOV AH , 0CH
+	MOV AL , 0
+	INT 10H
+	INC CX
+	CMP CX , SI
+	JNE ADDR
+    ENDM    
+    
+;抹方块（左）    
+WAPEL MACRO X1,Y1
+    LOCAL ADDR	
+	MOV SI,X1
+	ADD SI,13
+	MOV DI,Y1
+	ADD DI,14
+	MOV CX , SI
+	MOV DX , Y1
+ADDR:
+	MOV AH , 0CH
+	MOV AL , 0
+	INT 10H
+	INC DX
+	CMP DX , DI
+	JNE ADDR
+    ENDM    
+
+;抹方块（右）    
+WAPER MACRO X1,Y1
+    LOCAL ADDR	
+	MOV SI,X1
+	ADD SI,14
+	MOV DI,Y1
+	ADD DI,14
+	MOV CX , X1
+	MOV DX , Y1
+ADDR:
+	MOV AH , 0CH
+	MOV AL , 0
+	INT 10H
+	INC DX
+	CMP DX , DI
+	JNE ADDR
+    ENDM        
+     
+  
+    
+;判断是否出局
+JUDGE MACRO X1,Y1
+	MOV CX,X1
+	MOV DX,Y1
+	MOV AH,0DH
+	INT 10H
+	CMP AL,1
+	JZ EXIT
+	ADD CX,14
+	MOV DX,Y1
+	MOV AH,0DH
+	INT 10H
+	CMP AL,1
+	JZ EXIT
+	ADD DX,14
+	MOV AH,0DH
+	INT 10H
+	CMP AL,1
+	JZ EXIT
+    ENDM
+    
+;障碍
+OBSTACLE MACRO
+	LOCAL ADDR
+	MOV CX , 70
+	MOV DX , 10
+ADDR:
+	MOV AH , 0CH
+	MOV AL , 1
+	INT 10H
+	INC CX
+	CMP CX , 200
+	JNE ADDR
+	MOV CX , 70
+	INC DX
+	CMP DX , 60
+	JNE ADDR   
+    ENDM
+    
+;消障
+MISS MACRO
+	LOCAL ADDR
+	MOV CX , 110
+	MOV DX , 110
+ADDR:
+	MOV AH , 0CH
+	MOV AL , 3
+	INT 10H
+	INC CX
+	CMP CX , 131
+	JNE ADDR
+	MOV CX , 110
+	INC DX
+	CMP DX , 130
+	JNE ADDR 
+	ENDM    
+
+;保存之前的坐标值
+CHANGE MACRO X1,Y1,X2,Y2
+	
+	PUSH AX
+	MOV AX,X1
+	MOV X2,AX
+	MOV AX,Y1
+	MOV Y2,AX
+	POP AX
+	ENDM
+
+    
+DATAS SEGMENT
+    UP EQU 48H
+    DOWN EQU 50H
+    RIGHT EQU 4DH
+    LEFT EQU 4BH
+    ESCAPE EQU 1BH  
+    X1 DW 294
+    Y1 DW 30
+    X2 DW 294
+    Y2 DW 30
+    N EQU 0FFFFH
+    STRING DB 'SUCCESS','$'
+    ST1_LEN EQU $-STRING-1
+	STRING1 DB 'FAILURE','$'
+	ST1_LEN1 EQU $-STRING1-1
+DATAS ENDS
+
+STACKS SEGMENT
+    ;此处输入堆栈段代码
+STACKS ENDS
+
+CODES SEGMENT
+    ASSUME CS:CODES,DS:DATAS,SS:STACKS
+START:
+    MOV AX,DATAS
+    MOV DS,AX
+    MOV ES,AX
+
+	;MOV AH,1
+	;INT 21H   
+    CLS 0,0,24,79,70H	;清屏
+
+	MOV AH,0;显示方式320*200 4色图形
+    MOV AL,5H
+    INT 10H
+    
+    MOV AH,0BH;背景色
+    MOV BH,0
+    MOV BL,0;黑色
+    INT 10H
+    
+    MOV AH,0BH;置调色板
+    MOV BH,01
+    MOV BL,0
+    INT 10H
+	
+	;画管道	
+	COLUMN 10,30,130
+	COLUMN 30,50,130
+	COLUMN 90,30,110
+	COLUMN 110,50,130
+	COLUMN 130,70,130
+	COLUMN 150,90,110
+	COLUMN 250,50,70
+	COLUMN 270,7,90
+	COLUMN 290,30,110
+	COLUMN 310,30,130
+	COLUMN 50,50,130
+	COLUMN 70,30,110
+	COLUMN 250,7,30
+	ROW 250,270,7
+	ROW 30,50,50
+	ROW 10,70,30
+	ROW 70,90,110
+	ROW 50,110,130
+	ROW 130,310,130
+	ROW 90,250,30
+	ROW 110,250,50
+	ROW 130,250,70
+	ROW 150,270,90
+	ROW 150,290,110
+	
+	ROW2 255,265,20
+	ROW2 260,265,10
+	COLUMN2 260,10,30
+	
+	SQUARE 294,30    
+    MOV CX,294;像素光标位置
+    MOV DX,30
+    
+    GET_CHAR:
+    MOV AH,0
+    INT 16H
+    
+	CHANGE X1,Y1,X2,Y2	;保存之前坐标
+
+    CMP AL,ESCAPE	;判断是否退出
+    JZ EXIT
+    CMP AL,33H
+    JG PLOT
+    CMP AL,30H
+    JL PLOT
+	
+    PLOT:	;根据上下左右操纵小方块
+    ;WAPE X1,Y1    
+    MOV BH,AH	;AH中是扫描码
+    CMP BH,UP
+    JNZ NOT_UP
+    WAPEU X2,Y2	
+    DEC Y1
+    
+    NOT_UP:
+    CMP BH,DOWN
+    JNZ NOT_DOWN
+    INC Y1 
+    WAPED X2,Y2
+    
+    NOT_DOWN:
+    CMP BH,RIGHT
+    JNZ NOT_RIGHT
+    INC X1
+    WAPER X2,Y2
+    
+    NOT_RIGHT:
+    CMP BH,LEFT
+    JNZ WRITE
+    DEC X1
+    WAPEL X2,Y2
+    
+    WRITE:	;写小方块
+    JUDGE X1,Y1	;判断小方块是否触碰管壁
+    MOV CX,X1	
+    MOV DX,Y1
+    SQUARE X1,Y1
+    
+    CMP X1,220	;设置障碍
+    JA NO_OB	
+    OBSTACLE
+    NO_OB:
+    CMP Y1,30	;设置机关
+    JA CON
+    MISS
+    CON:
+    CMP Y1,130	;终点
+    JB CON_
+    JMP SUC
+    CON_:
+    JMP GET_CHAR
+    
+    SUC:
+    MOV AH,0	;成功转文本模式回显
+    MOV AL,1
+    INT 10H
+    CLS 0,0,24,79,07H
+    
+    MOV AH,6	
+    MOV AL,0
+    MOV CH,5
+    MOV CL,10
+    MOV DH,17
+    MOV DL,30
+    MOV BH,70H
+    INT 10H
+    
+    MOV AH,13H
+    LEA BP,STRING
+    MOV CX,ST1_LEN
+    MOV DH,9
+    MOV DL,18
+    MOV BH,0
+    MOV AL,1
+    MOV BL,3CH
+    INT 10H
+    MOV AH,1
+	INT 21H
+	JMP EN
+	
+    EXIT:
+    MOV AH,0	;成功转文本模式回显
+    MOV AL,1
+    INT 10H
+    CLS 0,0,24,79,07H
+    
+    MOV AH,6
+    MOV AL,0
+    MOV CH,5
+    MOV CL,10
+    MOV DH,17
+    MOV DL,30
+    MOV BH,70H
+    INT 10H
+    
+    MOV AH,13H
+    LEA BP,STRING1
+    MOV CX,ST1_LEN1
+    MOV DH,9
+    MOV DL,18
+    MOV BH,0
+    MOV AL,1
+    MOV BL,3CH
+    INT 10H
+    MOV AH,1
+	INT 21H
+    MOV AH,00
+    MOV AL,3
+    INT 10H
+    ;JMP GAME1        
+      
+    EN:
+    MOV AH,4CH
+    INT 21H
+CODES ENDS
+    END START
